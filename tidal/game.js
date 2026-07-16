@@ -1423,12 +1423,16 @@
     refreshContinue();
     screens.continue.classList.remove("hidden");
   }
+  // The ad-continue button only appears where an ad can really be served.
+  function adsReady() {
+    return !!(window.TidalStore && window.TidalStore.adsAvailable && window.TidalStore.adsAvailable());
+  }
   function refreshContinue() {
     const cost = continueCost();
     const coinsBtn = document.getElementById("cont-coins");
     if (coinsBtn) { coinsBtn.textContent = `Continue — ${cost} coins`; coinsBtn.disabled = coinsNow() < cost; }
     const adBtn = document.getElementById("cont-ad");
-    if (adBtn) adBtn.hidden = adUsed || !window.TidalStore;   // one free ad-continue per run
+    if (adBtn) adBtn.hidden = adUsed || !adsReady();          // one free ad-continue per run
     setText("coin-balance", coinsNow() + " coins");
   }
   // Toggle between the choice buttons and the "spend coins?" confirmation.
@@ -1436,7 +1440,7 @@
     ["cont-ad", "cont-coins", "cont-startover", "cont-menu"].forEach((id) => {
       const el = document.getElementById(id); if (el) el.hidden = on;
     });
-    if (!on) { const ad = document.getElementById("cont-ad"); if (ad) ad.hidden = adUsed || !window.TidalStore; }
+    if (!on) { const ad = document.getElementById("cont-ad"); if (ad) ad.hidden = adUsed || !adsReady(); }
     ["cont-confirm-text", "cont-yes", "cont-no"].forEach((id) => {
       const el = document.getElementById(id); if (el) el.hidden = !on;
     });
@@ -1547,7 +1551,7 @@
       const a = b.dataset.cont;
       if (a === "ad") {
         // One free continue per run via a rewarded ad.
-        if (adUsed || !window.TidalStore) return;
+        if (adUsed || !adsReady()) return;
         b.disabled = true;
         TidalStore.watchAd().then((ok) => {
           b.disabled = false;

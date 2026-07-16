@@ -16,8 +16,22 @@
   // rewarded ad-unit id once the AdMob account/app/unit exist.
   const AD_REWARDED_ID = "ca-app-pub-3940256099942544/1712485313";
 
-  // ---- MUST MATCH App Store Connect + RevenueCat -------------------------
-  const RC_API_KEY = "appl_VqkYGcKDGCJkcCEUOmCJPZydJYW";
+  // "ios" | "android" | "web". Capacitor injects getPlatform() on the same
+  // object the plugin lookups below already duck-type.
+  function plat() {
+    return (window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform()) || "web";
+  }
+  const NATIVE = plat() !== "web";
+
+  // ---- MUST MATCH App Store Connect / Play Console + RevenueCat -----------
+  // RevenueCat SDK keys are per-store: the appl_ key is rejected by
+  // RevenueCat's own backend on Android (403 "API key is not intended for the
+  // Platform"), so configure() must be given the key for the running platform.
+  // These are public SDK keys — safe to ship in client code.
+  const RC_KEYS = {
+    ios: "appl_VqkYGcKDGCJkcCEUOmCJPZydJYW",
+    android: "",                                     // TODO: goog_ key from RevenueCat
+  };
   const P_PREMIUM = "tidal_premium";                 // non-consumable
   const ENTITLEMENT = "premium";                     // RevenueCat entitlement id
   const COIN_PACKS = { 200: "tidal_coins_200", 500: "tidal_coins_500", 800: "tidal_coins_800" }; // consumables
@@ -83,9 +97,19 @@
 
     lastError() { return lastError; },
 
+    // True only where a rewarded ad can actually be shown. On device that
+    // means the AdMob plugin is installed and registered; on the web the
+    // stub below stands in so the flow stays testable.
+    adsAvailable() { return !NATIVE || !!admob(); },
+
     async buyPremium() {                 // non-consumable → RevenueCat entitlement
       const p = rc();
-      if (!p) { premium = true; save(); return true; }        // web/dev fallback
+      // Web/dev fallback only. On device a missing plugin is a real failure —
+      // granting the goods free would be a live giveaway.
+      if (!p) {
+        if (NATIVE) { lastError = "not available on this device"; return false; }
+        premium = true; save(); return true;
+      }
       lastError = "";
       try {
         const res = await purchaseId(P_PREMIUM);
@@ -99,7 +123,10 @@
 
     async buyCoins(amount) {             // consumable → grant coins locally on success
       const p = rc();
-      if (!p) { coins += amount; save(); return true; }       // web/dev fallback
+      if (!p) {                                               // web/dev fallback only
+        if (NATIVE) { lastError = "not available on this device"; return false; }
+        coins += amount; save(); return true;
+      }
       const id = COIN_PACKS[amount];
       if (!id) return false;
       lastError = "";
@@ -130,7 +157,12 @@
     // version; finalize when the plugin is added + the AdMob unit id is set.
     async watchAd() {
       const ad = admob();
-      if (!ad) return new Promise((res) => setTimeout(() => res(true), 400));
+      // On device, no plugin means no ad — never grant the reward. (The button
+      // is gated on adsAvailable() so this should be unreachable there.)
+      if (!ad) {
+        if (NATIVE) return false;
+        return new Promise((res) => setTimeout(() => res(true), 400));
+      }
       return new Promise(async (resolve) => {
         let done = false, rewarded = false;
         const finish = (v) => { if (!done) { done = true; resolve(v); } };
@@ -144,12 +176,16 @@
     },
   };
 
-  // Configure RevenueCat on device once the plugin is available.
+  // Configure RevenueCat on device once the plugin is available. A missing key
+  // for this platform means purchases are not wired up yet — leave the SDK
+  // unconfigured rather than hand it a key it will reject.
   document.addEventListener("DOMContentLoaded", async () => {
     const p = rc();
     if (!p) return;
+    const apiKey = RC_KEYS[plat()];
+    if (!apiKey) return;
     try {
-      await p.configure({ apiKey: RC_API_KEY });
+      await p.configure({ apiKey });
       const res = await p.getCustomerInfo();
       applyCustomerInfo(res && res.customerInfo);
     } catch (e) { /* ignore — keep last known state */ }
