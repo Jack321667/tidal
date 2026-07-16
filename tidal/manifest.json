@@ -1,6 +1,6 @@
 {
-  "name": "Tidal",
-  "short_name": "Tidal",
+  "name": "Tidal Orbit",
+  "short_name": "Tidal Orbit",
   "description": "A one-button gravity game. Flip between two planets and survive.",
   "start_url": "./index.html",
   "scope": "./",
