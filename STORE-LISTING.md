@@ -29,7 +29,7 @@ rule, whole new dimension.
 • A genuine 2D → 3D transformation at 100 points
 • Hand-built space backdrop: starfield, nebula, and a black hole
 • Sound, music, and haptics — with a Reduce Motion option
-• Plays fully offline. No ads, no tracking, no accounts.
+• Plays offline. No ads, no tracking, no accounts.
 
 Simple to learn. Hard to put down.
 ```
@@ -47,7 +47,20 @@ Primary: **Games** → **Arcade**. Secondary: **Action**.
 Expected **4+** (no objectionable content). Answer "None" to all questionnaire items.
 
 ## App Privacy
-Select **"Data Not Collected"** (see PRIVACY.md). Provide the hosted privacy-policy URL.
+**Do NOT select "Data Not Collected"** — that was correct before IAP shipped and is now
+inaccurate. Apple's rule is that you declare what your SDKs collect as if you collected it
+yourself, and RevenueCat (purchases) is a third-party SDK that phones home.
+
+Declare:
+- **Purchases → Purchase History** — collected by RevenueCat to validate and restore
+  purchases. *Not* linked to identity (the app-user id is random and anonymous), *not*
+  used for tracking.
+
+Game Center leaderboard scores are handled by Apple under Apple's own policy and do not
+need a separate declaration here.
+
+Provide the hosted privacy-policy URL — the GitHub Pages copy of `docs/privacy.html`, which
+is the single source of truth for the policy (it is already on the live v1.0 listing).
 
 ## Screenshots to capture (from the iOS Simulator)
 Required sizes: 6.7" (e.g. iPhone 15 Pro Max) and 6.5".

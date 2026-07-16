@@ -31,8 +31,10 @@ you begin at any reached orbital (score starts at its threshold).
 - `gamecenter.js` — Game Center leaderboard → `window.TidalGC`.
 - `index.html`, `style.css`, `sw.js` (offline cache — bump `CACHE` version on every change), `vendor/` (Three.js).
 - Root: `codemagic.yaml`, `capacitor.config.json`, `package.json`, `ci/` (CI scripts),
-  `resources/` (icon/splash sources), `docs/` (privacy + support pages → GitHub Pages),
-  `PRIVACY.md`, `STORE-LISTING.md`, `BUILD-iOS.md`, `V1.1-CHECKLIST.md`.
+  `resources/` (icon/splash sources), `docs/` (privacy + support pages → GitHub Pages;
+  `docs/privacy.html` is the **only** copy of the privacy policy — it is the URL on the
+  store listing, so edit it there and nowhere else),
+  `STORE-LISTING.md`, `BUILD-iOS.md`, `V1.1-CHECKLIST.md`.
 
 ## Run locally
 Serve over HTTP (3D + service worker need it), from the repo root:
