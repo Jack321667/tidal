@@ -25,15 +25,19 @@ workflows:
         BUNDLE_ID: "com.mschaefer20.tidal"
         XCODE_WORKSPACE: "ios/App/App.xcworkspace"
         XCODE_SCHEME: "App"
-      node: 20
-      xcode: latest
+      node: 22            # Capacitor 8 CLI requires Node >=22
+      xcode: latest       # Capacitor 8 needs Xcode 16.4+ (latest resolves 26.x)
       cocoapods: default
     scripts:
       - name: Install npm dependencies
         script: npm install
       - name: Add iOS platform (if not committed)
         script: |
-          if [ ! -d "ios" ]; then npx cap add ios; fi
+          # Capacitor 8 defaults to Swift Package Manager, which produces no
+          # Podfile and no App.xcworkspace — breaking both `pod install` and
+          # `build-ipa --workspace` below. Force CocoaPods to keep the existing
+          # pipeline (and the ci/*.js pbxproj patches) working.
+          if [ ! -d "ios" ]; then npx cap add ios --packagemanager CocoaPods; fi
       - name: Sync web assets + plugins into the native project
         script: npx cap sync ios
       - name: Make the app iPhone-only (no iPad)
