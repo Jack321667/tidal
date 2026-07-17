@@ -33,7 +33,9 @@ html, body {
   align-items: center;
   justify-content: center;
   gap: 16px;
-  padding: max(14px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom));
+  /* Cap 8.4+ injects --safe-area-inset-* on Android (WebView env() is wrong there);
+     iOS has no such var, so env() wins. Var first, env() then 0px as fallbacks. */
+  padding: max(14px, var(--safe-area-inset-top, env(safe-area-inset-top, 0px))) 14px max(14px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
 }
 
 .hud {
