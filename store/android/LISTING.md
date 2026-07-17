@@ -8,7 +8,10 @@ review before publishing. Specs verified against Play Console Help (2026-07-16).
 
 ## Identity
 - **App title** (≤30): `Tidal Orbit`
-- **Package name**: `com.mschaefer20.tidal` (permanent, never reusable — matches iOS bundle id)
+- **Package name**: `io.github.mschaefer20.tidal` (Play — permanent, never reusable).
+  Note this **differs from the iOS bundle id** `com.mschaefer20.tidal` — that's fine and
+  intentional; the stores use independent identifiers. Set on Android only by
+  `ci/android-appid.js`; `capacitor.config.json` appId stays the iOS value.
 - **Category**: Games → Arcade
 - **Contact email**: consider a dedicated alias — Play displays this publicly on the listing.
 

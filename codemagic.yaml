@@ -136,6 +136,8 @@ workflows:
           if [ ! -d "android" ]; then npx cap add android; fi
       - name: Sync web assets + plugins into the native project
         script: npx cap sync android
+      - name: Set Android applicationId (Play package name, differs from iOS)
+        script: node ci/android-appid.js
       - name: Stamp versionCode (= build number) + versionName (= package.json)
         script: node ci/android-version.js
       - name: Lock portrait orientation (+ large-screen compat)
