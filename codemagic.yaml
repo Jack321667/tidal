@@ -99,3 +99,63 @@ workflows:
         # TestFlight test info in App Store Connect, then set this to true.
         submit_to_testflight: false
         # submit_to_app_store: false   # flip to true once you're ready to release
+
+  # ---------------------------------------------------------------------------
+  # ANDROID — builds the same web app (webDir: tidal) into a signed .aab.
+  # Like iOS, the android/ project is NOT committed: it is generated fresh by
+  # `npx cap add android` and re-patched by the ci/android-*.js scripts. Start
+  # this from the Codemagic UI (no auto-trigger), same as the iOS workflow.
+  #
+  # ONE-TIME SETUP in the Codemagic UI before the first run:
+  #   - Variable group "googleplay" with GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS
+  #     (the Play service-account JSON — see RevenueCat/Play setup).
+  #   - Android keystore uploaded under the reference name "tidal_keystore"
+  #     (Codemagic exposes it to Gradle as CM_KEYSTORE_PATH / _PASSWORD /
+  #     CM_KEY_ALIAS / CM_KEY_PASSWORD, which ci/android-signing.js reads).
+  # NOTE: the FIRST .aab cannot be published via API — upload it once by hand in
+  # the Play Console, then this google_play block works for subsequent builds.
+  android-tidal:
+    name: Tidal Android
+    instance_type: mac_mini_m2      # Codemagic's free minutes are macOS-only;
+                                    # switch to linux_x2 if paying per-minute.
+    max_build_duration: 60
+    environment:
+      groups:
+        - googleplay
+      android_signing:
+        - tidal_keystore
+      vars:
+        BUNDLE_ID: "com.mschaefer20.tidal"
+      node: 22
+      java: 21
+    scripts:
+      - name: Install npm dependencies
+        script: npm install
+      - name: Add Android platform (if not committed)
+        script: |
+          if [ ! -d "android" ]; then npx cap add android; fi
+      - name: Sync web assets + plugins into the native project
+        script: npx cap sync android
+      - name: Stamp versionCode (= build number) + versionName (= package.json)
+        script: node ci/android-version.js
+      - name: Lock portrait orientation (+ large-screen compat)
+        script: node ci/android-manifest.js
+      - name: Inject release signing config
+        script: node ci/android-signing.js
+      - name: Generate app icon & splash
+        script: npx capacitor-assets generate --android || true
+      - name: Assert an adaptive icon was generated (capacitor-assets fails open)
+        script: test -f android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+      - name: Build signed release AAB
+        script: |
+          cd android
+          ./gradlew bundleRelease
+    artifacts:
+      - android/app/build/outputs/bundle/release/*.aab
+      - android/app/build/outputs/**/*.apk
+    publishing:
+      google_play:
+        credentials: $GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+        # Draft/held so a stray build never auto-goes-live to testers.
+        submit_as_draft: true

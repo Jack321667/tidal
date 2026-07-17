@@ -1,13 +1,18 @@
 # Dependencies
 node_modules/
 
-# Capacitor / iOS native build output
-ios/App/Pods/
-ios/App/build/
-ios/App/App/public/
+# Capacitor native projects — fully generated in CI (npx cap add ios/android)
+# and re-patched by the ci/ scripts, so they are never committed.
+/ios/
+/android/
 DerivedData/
 *.xcworkspace/xcuserdata/
 *.xcodeproj/xcuserdata/
+
+# Android build output / signing (NEVER commit a keystore)
+*.keystore
+*.jks
+keystore.properties
 
 # macOS / misc
 .DS_Store
